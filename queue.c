@@ -197,44 +197,26 @@ void q_reverse(queue_t *q)
     }
 }
 
-void split(list_ele_t *head,
-           list_ele_t **left_ref,
-           list_ele_t **right_ref,
-           int size,
-           int *left_size,
-           int *right_size)
-{
-    *left_size = size / 2 + size % 2;
-    *right_size = size / 2;
-
-    list_ele_t *tmp = head;
-    for (int i = 0; i < *left_size - 1; ++i) {
-        tmp = tmp->next;
-    }
-    *right_ref = tmp->next;
-    tmp->next = NULL;
-    *left_ref = head;
-}
-
 list_ele_t *merge(list_ele_t *left, list_ele_t *right)
 {
-    if (!left) {
-        return right;
+    list_ele_t result, *result_ptr = &result;
+    while (result_ptr) {
+        if (!left) {
+            result_ptr->next = right;
+            break;
+        } else if (!right) {
+            result_ptr->next = left;
+            break;
+        } else {
+            list_ele_t **target =
+                (strcmp(left->value, right->value) <= 0) ? &left : &right;
+            result_ptr->next = *target;
+            *target = (*target)->next;
+            result_ptr = result_ptr->next;
+            result_ptr->next = NULL;
+        }
     }
-    if (!right) {
-        return left;
-    }
-
-    list_ele_t *result = NULL;
-    if (strcmp(left->value, right->value) < 0) {
-        result = left;
-        result->next = merge(left->next, right);
-    } else {
-        result = right;
-        result->next = merge(left, right->next);
-    }
-
-    return result;
+    return result.next;
 }
 
 list_ele_t *merge_sort(list_ele_t *head, int size)
@@ -243,9 +225,16 @@ list_ele_t *merge_sort(list_ele_t *head, int size)
         return head;
     }
 
-    list_ele_t *left = NULL, *right = NULL;
-    int left_size = 0, right_size = 0;
-    split(head, &left, &right, size, &left_size, &right_size);
+    list_ele_t *left = head, *right = NULL;
+    int left_size = size / 2 + size % 2, right_size = size / 2;
+
+    list_ele_t *tmp = head;
+    for (int i = 0; i < left_size - 1; ++i) {
+        tmp = tmp->next;
+    }
+    right = tmp->next;
+    tmp->next = NULL;
+
 
     left = merge_sort(left, left_size);
     right = merge_sort(right, right_size);
